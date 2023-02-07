@@ -21,10 +21,21 @@ func init() {
 	DB.AutoMigrate(FileModel{})
 	DB.AutoMigrate(LikeModel{})
 	DB.AutoMigrate(CommentModel{})
+	DB.AutoMigrate(FollowModel{})
 
 	// 点赞记录
 	rdbLike = redis.NewClient(&redis.Options{
 		Addr: config.RedisAddr,
 		DB:   1,
+	})
+	// 被关注者的关注者记录
+	rdbMasterFollowerDB = redis.NewClient(&redis.Options{
+		Addr: config.RedisAddr,
+		DB:   2,
+	})
+	// 用户关注的所有人记录
+	rdbFollowerMasterDB = redis.NewClient(&redis.Options{
+		Addr: config.RedisAddr,
+		DB:   3,
 	})
 }

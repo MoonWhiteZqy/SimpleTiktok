@@ -12,6 +12,6 @@ func (p PublishServiceImpl) GetVideoOfUser(userId int64) ([]dao.Video, error) {
 	return dao.GetVideoOfUser(userId)
 }
 
-func (p PublishServiceImpl) GetFeed() ([]dao.Video, error) {
-	return dao.GetFeed()
+func (p PublishServiceImpl) GetFeed(latestTime int64) ([]dao.Video, int64, error) {
+	return dao.GetFeed(latestTime)
 }

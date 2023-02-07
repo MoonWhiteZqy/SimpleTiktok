@@ -8,26 +8,37 @@ import (
 	"simpleTiktok/middleware/jwt"
 	"simpleTiktok/service"
 	"strconv"
+	"time"
 
 	"github.com/gin-gonic/gin"
 )
 
 // GET /douyin/feed
 //
-// TODO：返回Feed
+// 返回上传时间早于latest_time的Feed,默认为请求到达该函数的时间
 func Feed(c *gin.Context) {
+	// 提取上次的时间
+	latestTimeStr := c.Query("latest_time")
+	latestTime, err := strconv.ParseInt(latestTimeStr, 10, 64)
+
+	// 如果latestTime转换失败,以当前时间作为最后时间
+	if err != nil || latestTime < 0 {
+		latestTime = time.Now().Unix()
+	}
+
+	// 获取小于latestTime的30个视频
 	srv := service.PublishServiceImpl{}
-	videos, err := srv.GetFeed()
+	videos, nextTime, err := srv.GetFeed(latestTime)
 	if err != nil {
 		c.JSON(http.StatusOK, FeedResponse{
 			Response: Response{StatusMsg: fmt.Sprintf("err when get feed: %v", err), StatusCode: 1},
 		})
 		return
 	}
-
-	c.JSON(http.StatusOK, PublishListResponse{
+	c.JSON(http.StatusOK, FeedResponse{
 		Response:  Response{StatusCode: 0},
 		VideoList: videos,
+		NextTime:  nextTime,
 	})
 }
 
@@ -42,7 +53,7 @@ func UserRegister(c *gin.Context) {
 	srv := service.UserServiceImpl{}
 
 	// 调用创建用户服务
-	userId, err := srv.UserRegisterSrv(username, password)
+	userId, err := srv.RegisterSrv(username, password)
 	if err != nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when create user: %v", err)},
@@ -73,7 +84,7 @@ func UserLogin(c *gin.Context) {
 	password := c.Query("password")
 	srv := service.UserServiceImpl{}
 
-	userId, err := srv.UserLoginSrv(username, password)
+	userId, err := srv.LoginSrv(username, password)
 	if err != nil {
 		c.JSON(http.StatusOK, UserLoginResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when looking for user: %v", err)},
@@ -110,7 +121,7 @@ func UserInfo(c *gin.Context) {
 
 	// 调用服务,根据用户id获取用户信息
 	srv := service.UserServiceImpl{}
-	userName, err := srv.UserBaseInfoSrv(userId)
+	userName, err := srv.BaseInfoSrv(userId)
 	if err != nil {
 		c.JSON(http.StatusOK, UserInfoResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when quarying userId: %v", err)},
@@ -171,8 +182,6 @@ func PublishAction(c *gin.Context) {
 // GET /douyin/publish/list
 //
 // 获取登录用户上传的视频列表
-//
-// TODO:返回Video中的Author信息,以及Video中的各种信息
 func PublishListVideos(c *gin.Context) {
 	// 获取要查询的用户id
 	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)

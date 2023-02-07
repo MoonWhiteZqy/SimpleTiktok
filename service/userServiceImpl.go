@@ -9,7 +9,7 @@ import (
 type UserServiceImpl struct{}
 
 // 用户注册服务,返回用户id
-func (u UserServiceImpl) UserRegisterSrv(userName, password string) (int64, error) {
+func (u UserServiceImpl) RegisterSrv(userName, password string) (int64, error) {
 	secretpwd := Encode(password)
 	return dao.CreateUser(userName, secretpwd)
 }
@@ -21,11 +21,11 @@ func Encode(raw string) string {
 }
 
 // 比较加密后的密码和数据库中存储的密码
-func (u UserServiceImpl) UserLoginSrv(userName, password string) (int64, error) {
+func (u UserServiceImpl) LoginSrv(userName, password string) (int64, error) {
 	secretpwd := Encode(password)
 	return dao.CheckPassword(userName, secretpwd)
 }
 
-func (u UserServiceImpl) UserBaseInfoSrv(userId int64) (string, error) {
+func (u UserServiceImpl) BaseInfoSrv(userId int64) (string, error) {
 	return dao.GetUserByUserId(userId)
 }

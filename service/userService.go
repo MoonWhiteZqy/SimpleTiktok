@@ -1,7 +1,7 @@
 package service
 
 type UserService interface {
-	UserRegisterSrv(string, string) (int64, error)
-	UserLoginSrv(string, string) (int64, error)
-	UserBaseInfoSrv(int64) (string, error)
+	RegisterSrv(string, string) (int64, error)
+	LoginSrv(string, string) (int64, error)
+	BaseInfoSrv(int64) (string, error)
 }

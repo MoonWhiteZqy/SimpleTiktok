@@ -26,4 +26,10 @@ func initRouter(r *gin.Engine) {
 	g.GET("/favorite/list", jwt.AuthUser, controller.FavoriteList)
 	g.POST("/comment/action", jwt.AuthUser, controller.CommentAction)
 	g.GET("/comment/list", jwt.AuthUser, controller.CommentList)
+
+	// 社交 API
+	re := g.Group("/relation")
+	re.POST("/action", jwt.AuthUser, controller.RelationAction)
+	re.GET("/follow/list", jwt.AuthUser, controller.RelationFollowList)
+	re.GET("/follower/list", jwt.AuthUser, controller.RelationFollowerList)
 }

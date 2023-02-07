@@ -2,6 +2,7 @@ package dao
 
 import (
 	"errors"
+	"strconv"
 
 	"gorm.io/gorm"
 )
@@ -60,6 +61,8 @@ func GetUserByUserId(userId int64) (string, error) {
 }
 
 // 根据用户id返回用户信息
+//
+// TODO:完善User的FollowCount
 func getUserById(userId int64) (User, error) {
 	var user UserModel
 	DB.Where("id = ?", userId).Find(&user)
@@ -70,4 +73,13 @@ func getUserById(userId int64) (User, error) {
 		return User{}, errors.New("user id not exists")
 	}
 	return User{UserId: userId, Name: user.Name}, nil
+}
+
+// 根据用户id的string返回用户信息
+func getUserByIdStr(userIdStr string) (User, error) {
+	userId, err := strconv.ParseInt(userIdStr, 10, 64)
+	if err != nil {
+		return User{}, err
+	}
+	return getUserById(userId)
 }

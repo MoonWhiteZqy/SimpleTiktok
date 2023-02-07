@@ -39,3 +39,8 @@ type CommentListResponse struct {
 	Response
 	Comment []dao.Comment `json:"comment_list,omitempty"`
 }
+
+type RelationUserListResponse struct {
+	Response
+	UserList []dao.User `json:"user_list,omitempty"`
+}

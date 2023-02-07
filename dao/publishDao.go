@@ -4,6 +4,7 @@ import (
 	"errors"
 	"fmt"
 	"os"
+	"time"
 
 	"gorm.io/gorm"
 )
@@ -38,6 +39,8 @@ func SavePOSTFile(content []byte, path, fileName, title string, userId int64) er
 }
 
 // 获取对应用户id上传的视频列表
+//
+// TODO: 完善Video和Author信息
 func GetVideoOfUser(userId int64) ([]Video, error) {
 	var videos []FileModel
 	var res []Video
@@ -63,11 +66,13 @@ func GetVideoOfUser(userId int64) ([]Video, error) {
 
 // 获取Feed
 //
-// TODO:限制lastest_time
-func GetFeed() ([]Video, error) {
+// TODO:完善视频内容Url
+func GetFeed(latestTime int64) ([]Video, int64, error) {
 	var videos []FileModel
 	var res []Video
-	DB.Order("created_at desc").Limit(30).Find(&videos)
+	nextTime := int64(-1)
+	// 获取视频文件
+	DB.Where("created_at < ?", time.Unix(latestTime, 0)).Order("created_at desc").Limit(30).Find(&videos)
 	for _, v := range videos {
 		author, err := getUserById(v.AuthorId)
 		if err != nil {
@@ -83,8 +88,9 @@ func GetFeed() ([]Video, error) {
 			CommentCount:  0,
 			Title:         v.Title,
 		})
+		nextTime = v.CreatedAt.Unix()
 	}
-	return res, DB.Error
+	return res, nextTime, DB.Error
 }
 
 // 在数据库中查找对应Id的视频

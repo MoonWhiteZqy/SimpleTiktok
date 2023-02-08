@@ -26,6 +26,6 @@ func (u UserServiceImpl) LoginSrv(userName, password string) (int64, error) {
 	return dao.CheckPassword(userName, secretpwd)
 }
 
-func (u UserServiceImpl) BaseInfoSrv(userId int64) (string, error) {
-	return dao.GetUserByUserId(userId)
+func (u UserServiceImpl) BaseInfoSrv(userId, queryedUserId int64) (dao.User, error) {
+	return dao.GetUserInfo(userId, queryedUserId)
 }

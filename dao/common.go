@@ -3,9 +3,9 @@ package dao
 type User struct {
 	UserId        int64  `json:"id"`
 	Name          string `json:"name"`
-	FollowCount   int64  `json:"follow_count,omitempty"`   // 关注总数
-	FollowerCount int64  `json:"follower_count,omitempty"` // 粉丝总数
-	IsFollow      bool   `json:"is_follow"`                // true代表已关注
+	FollowCount   int64  `json:"follow_count"`   // 关注总数
+	FollowerCount int64  `json:"follower_count"` // 粉丝总数
+	IsFollow      bool   `json:"is_follow"`      // true代表已关注
 }
 
 type Video struct {

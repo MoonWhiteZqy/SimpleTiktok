@@ -4,7 +4,6 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
-	"simpleTiktok/dao"
 	"simpleTiktok/middleware/jwt"
 	"simpleTiktok/service"
 	"strconv"
@@ -26,9 +25,10 @@ func Feed(c *gin.Context) {
 		latestTime = time.Now().Unix()
 	}
 
+	jwtUserId, _ := c.Get("userId")
 	// 获取小于latestTime的30个视频
-	srv := service.PublishServiceImpl{}
-	videos, nextTime, err := srv.GetFeed(latestTime)
+	srv := service.PublishServiceImpl{Host: c.Request.Host}
+	videos, nextTime, err := srv.GetFeed(latestTime, jwtUserId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, FeedResponse{
 			Response: Response{StatusMsg: fmt.Sprintf("err when get feed: %v", err), StatusCode: 1},
@@ -111,17 +111,18 @@ func UserLogin(c *gin.Context) {
 // 获取用户信息
 func UserInfo(c *gin.Context) {
 	// 获取用户id,转换成int64
-	userId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
+	queryedUserId, err := strconv.ParseInt(c.Query("user_id"), 10, 64)
 	if err != nil {
 		c.JSON(http.StatusOK, UserInfoResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when parsing userId: %v", err)},
 		})
 		return
 	}
+	userId, _ := c.Get("userId")
 
 	// 调用服务,根据用户id获取用户信息
 	srv := service.UserServiceImpl{}
-	userName, err := srv.BaseInfoSrv(userId)
+	queryedUser, err := srv.BaseInfoSrv(userId.(int64), queryedUserId)
 	if err != nil {
 		c.JSON(http.StatusOK, UserInfoResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when quarying userId: %v", err)},
@@ -130,10 +131,7 @@ func UserInfo(c *gin.Context) {
 	}
 	c.JSON(http.StatusOK, UserInfoResponse{
 		Response: Response{StatusCode: 0, StatusMsg: ""},
-		User: dao.User{
-			UserId: userId,
-			Name:   userName,
-		},
+		User:     queryedUser,
 	})
 }
 
@@ -173,7 +171,7 @@ func PublishAction(c *gin.Context) {
 		return
 	}
 
-	srv := service.PublishServiceImpl{}
+	srv := service.PublishServiceImpl{Host: c.Request.Host}
 	srv.SavePOSTFile(fileContent, fmt.Sprintf("./storage/%v/", userId), formFileData.Filename, title, userId.(int64))
 
 	c.JSON(http.StatusOK, Response{StatusCode: 0})
@@ -192,9 +190,11 @@ func PublishListVideos(c *gin.Context) {
 		return
 	}
 
+	jwtUserId, _ := c.Get("userId")
+
 	// 读取视频元数据
-	srv := service.PublishServiceImpl{}
-	videos, err := srv.GetVideoOfUser(userId)
+	srv := service.PublishServiceImpl{Host: c.Request.Host}
+	videos, err := srv.GetVideoOfUser(userId, jwtUserId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, PublishListResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when getting videos: %v", err)},

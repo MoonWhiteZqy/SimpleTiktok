@@ -6,7 +6,9 @@ import (
 	"strconv"
 )
 
-type CommentServiceImpl struct{}
+type CommentServiceImpl struct {
+	Host string
+}
 
 // 评论服务
 //
@@ -31,10 +33,10 @@ func (c CommentServiceImpl) CommentAction(userId int64, videoIdStr string, actio
 }
 
 // 获取视频下所有评论服务
-func (c CommentServiceImpl) CommentList(videoIdStr string) ([]dao.Comment, error) {
+func (c CommentServiceImpl) CommentList(videoIdStr string, jwtUserId int64) ([]dao.Comment, error) {
 	videoId, err := strconv.ParseInt(videoIdStr, 10, 64)
 	if err != nil {
 		return make([]dao.Comment, 0), err
 	}
-	return dao.GetCommentDescByPublishTime(videoId)
+	return dao.GetCommentDescByPublishTime(videoId, jwtUserId)
 }

@@ -32,4 +32,7 @@ func initRouter(r *gin.Engine) {
 	re.POST("/action", jwt.AuthUser, controller.RelationAction)
 	re.GET("/follow/list", jwt.AuthUser, controller.RelationFollowList)
 	re.GET("/follower/list", jwt.AuthUser, controller.RelationFollowerList)
+
+	// 静态文件
+	g.Static("/static/", "./storage/")
 }

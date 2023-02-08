@@ -48,7 +48,7 @@ func FavoriteList(c *gin.Context) {
 	}
 
 	// 调用服务获取点赞过的视频
-	srv := service.FavoriteServiceImpl{}
+	srv := service.FavoriteServiceImpl{Host: c.Request.Host}
 	videos, err := srv.ListAction(userId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, PublishListResponse{
@@ -73,7 +73,7 @@ func CommentAction(c *gin.Context) {
 	commentText := c.Query("comment_text")
 	commentIdStr := c.Query("comment_id")
 
-	srv := service.CommentServiceImpl{}
+	srv := service.CommentServiceImpl{Host: c.Request.Host}
 	comment, err := srv.CommentAction(userId.(int64), videoIdStr, actionTypeStr, commentText, commentIdStr)
 
 	if err != nil {
@@ -94,9 +94,10 @@ func CommentAction(c *gin.Context) {
 // 获取视频下的所有评论,按发布时间倒序
 func CommentList(c *gin.Context) {
 	videoIdStr := c.Query("video_id")
+	jwtUserId, _ := c.Get("userId")
 
-	srv := service.CommentServiceImpl{}
-	comments, err := srv.CommentList(videoIdStr)
+	srv := service.CommentServiceImpl{Host: c.Request.Host}
+	comments, err := srv.CommentList(videoIdStr, jwtUserId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, CommentListResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err when in list service: %v", err)},

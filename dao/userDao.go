@@ -60,11 +60,20 @@ func GetUserByUserId(userId int64) (string, error) {
 	return user.Name, nil
 }
 
-// 根据用户id返回用户信息
-//
-// TODO:完善User的FollowCount
-func getUserById(userId int64) (User, error) {
+// 当前登录用户获取目标用户信息
+func GetUserInfo(userId, queryedUserId int64) (User, error) {
+	queryedUser, err := getUserById(queryedUserId, userId)
+	if err != nil {
+		return User{}, err
+	}
+	return queryedUser, nil
+}
+
+// 根据用户id返回用户信息,并填充 目标用户 和 当前鉴权用户 的关注关系
+func getUserById(userId, jwtUserId int64) (User, error) {
 	var user UserModel
+	var followCount, followerCount int64
+	var isFollow bool
 	DB.Where("id = ?", userId).Find(&user)
 	if DB.Error != nil {
 		return User{}, DB.Error
@@ -72,14 +81,21 @@ func getUserById(userId int64) (User, error) {
 	if user.Model == nil {
 		return User{}, errors.New("user id not exists")
 	}
-	return User{UserId: userId, Name: user.Name}, nil
+
+	// 从Redis获取关注相关数量
+	followCount, _ = rdbFollowerMasterDB.SCard(ctx, i64ToStr(userId)).Result()
+	followerCount, _ = rdbMasterFollowerDB.SCard(ctx, i64ToStr(userId)).Result()
+
+	// 获取关注关系
+	isFollow, _ = rdbFollowerMasterDB.SIsMember(ctx, i64ToStr(jwtUserId), i64ToStr(userId)).Result()
+	return User{UserId: userId, Name: user.Name, FollowCount: followCount, FollowerCount: followerCount, IsFollow: isFollow}, nil
 }
 
 // 根据用户id的string返回用户信息
-func getUserByIdStr(userIdStr string) (User, error) {
+func getUserByIdStr(userIdStr string, jwtUserId int64) (User, error) {
 	userId, err := strconv.ParseInt(userIdStr, 10, 64)
 	if err != nil {
 		return User{}, err
 	}
-	return getUserById(userId)
+	return getUserById(userId, jwtUserId)
 }

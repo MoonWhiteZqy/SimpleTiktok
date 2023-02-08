@@ -54,7 +54,7 @@ func LikeAction(userId int64, videoIdStr string, like bool) error {
 }
 
 // 获取用户点赞过的所有视频
-func LikeList(userId int64) ([]Video, error) {
+func LikeList(userId int64, userHost string) ([]Video, error) {
 	// 从Redis读取点赞过的视频
 	videoIdStrs, err := rdbLike.SMembers(ctx, fmt.Sprintf("%v", userId)).Result()
 	if err != nil {
@@ -69,11 +69,10 @@ func LikeList(userId int64) ([]Video, error) {
 			continue
 		}
 		// 从数据库获取视频数据
-		video, err := getVideoById(videoId)
+		video, err := getVideoById(videoId, userId, userHost)
 		if err != nil {
 			break
 		}
-		video.IsFavorite = true
 		res = append(res, video)
 	}
 	return res, err
@@ -93,7 +92,7 @@ func PublishComment(userId int64, videoId int64, commentText string) (Comment, e
 	}
 
 	// 获取发布评论者的信息
-	user, err := getUserById(userId)
+	user, err := getUserById(userId, userId)
 	if err != nil {
 		return Comment{}, errors.New("err when getting user")
 	}
@@ -115,7 +114,7 @@ func DeleteComment(userId int64, commentId int64) error {
 }
 
 // 获取视频的所有评论,按发布时间倒序
-func GetCommentDescByPublishTime(videoId int64) ([]Comment, error) {
+func GetCommentDescByPublishTime(videoId int64, jwtUserId int64) ([]Comment, error) {
 	var commentLogs []CommentModel
 	err := DB.Where("video_id = ?", videoId).Order("created_at desc").Find(&commentLogs).Error
 	if err != nil {
@@ -125,7 +124,7 @@ func GetCommentDescByPublishTime(videoId int64) ([]Comment, error) {
 	var res []Comment
 	for _, commentLog := range commentLogs {
 		// 获取评论发布者的信息
-		user, err := getUserById(commentLog.UserId)
+		user, err := getUserById(commentLog.UserId, jwtUserId)
 		if err != nil {
 			continue
 		}
@@ -140,4 +139,18 @@ func GetCommentDescByPublishTime(videoId int64) ([]Comment, error) {
 		})
 	}
 	return res, nil
+}
+
+// 获取所有Like数据,交给Redis
+func getLikeLogs() []LikeModel {
+	var likes []LikeModel
+	DB.Find(&likes)
+	return likes
+}
+
+// 获取所有 关注 关系,交给Redis
+func getFollowLogs() []FollowModel {
+	var follows []FollowModel
+	DB.Find(&follows)
+	return follows
 }

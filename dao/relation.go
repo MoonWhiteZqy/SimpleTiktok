@@ -54,7 +54,7 @@ func UnFollowMaster(userId, masterId int64) error {
 }
 
 // 获取 用户 在对应表中的所有用户信息
-func getUserCorrespondList(userId string, rdb *redis.Client) ([]User, error) {
+func getUserCorrespondList(userId string, jwtUserId int64, rdb *redis.Client) ([]User, error) {
 	// 获取表中存储的 所有用户id
 	targetIdStrs, err := rdb.SMembers(ctx, userId).Result()
 	if err != nil {
@@ -64,7 +64,7 @@ func getUserCorrespondList(userId string, rdb *redis.Client) ([]User, error) {
 	var userList []User
 	// 通过id获取用户信息
 	for _, targetIdStr := range targetIdStrs {
-		user, err := getUserByIdStr(targetIdStr)
+		user, err := getUserByIdStr(targetIdStr, jwtUserId)
 		if err != nil {
 			continue
 		}
@@ -74,17 +74,13 @@ func getUserCorrespondList(userId string, rdb *redis.Client) ([]User, error) {
 }
 
 // 获取 当前用户 关注的所有用户
-func GetMasterList(userId string) ([]User, error) {
-	users, err := getUserCorrespondList(userId, rdbFollowerMasterDB)
-	// 由于获取的所有用户都是关注的用户,因此把IsFollow都置为true
-	for i := range users {
-		users[i].IsFollow = true
-	}
+func GetMasterList(userId string, jwtUserId int64) ([]User, error) {
+	users, err := getUserCorrespondList(userId, jwtUserId, rdbFollowerMasterDB)
 	return users, err
 }
 
 // 获取 当前用户 关注的所有用户
-func GetFollowerList(masterId string) ([]User, error) {
-	users, err := getUserCorrespondList(masterId, rdbMasterFollowerDB)
+func GetFollowerList(masterId string, jwtUserId int64) ([]User, error) {
+	users, err := getUserCorrespondList(masterId, jwtUserId, rdbMasterFollowerDB)
 	return users, err
 }

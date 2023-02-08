@@ -40,11 +40,11 @@ func (r RelationServiceImpl) Action(userId int64, toUserIdStr string, actionType
 }
 
 // 获取当前用户关注的所有用户
-func (r RelationServiceImpl) MasterList(userId string) ([]dao.User, error) {
-	return dao.GetMasterList(userId)
+func (r RelationServiceImpl) MasterList(userId string, jwtUserId int64) ([]dao.User, error) {
+	return dao.GetMasterList(userId, jwtUserId)
 }
 
 // 获取 关注当前用户 的 所有用户
-func (r RelationServiceImpl) FollowerList(masterId string) ([]dao.User, error) {
-	return dao.GetFollowerList(masterId)
+func (r RelationServiceImpl) FollowerList(masterId string, jwtUserId int64) ([]dao.User, error) {
+	return dao.GetFollowerList(masterId, jwtUserId)
 }

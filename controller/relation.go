@@ -36,9 +36,10 @@ func RelationAction(c *gin.Context) {
 // 获取当前用户关注的所有用户
 func RelationFollowList(c *gin.Context) {
 	userId := c.Query("user_id")
+	jwtUserId, _ := c.Get("userId")
 
 	srv := service.RelationServiceImpl{}
-	masters, err := srv.MasterList(userId)
+	masters, err := srv.MasterList(userId, jwtUserId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, RelationUserListResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err in relation service: %v", err)},
@@ -57,9 +58,10 @@ func RelationFollowList(c *gin.Context) {
 // 获取当前用户的所有粉丝
 func RelationFollowerList(c *gin.Context) {
 	userId := c.Query("user_id")
+	jwtUserId, _ := c.Get("userId")
 
 	srv := service.RelationServiceImpl{}
-	masters, err := srv.FollowerList(userId)
+	masters, err := srv.FollowerList(userId, jwtUserId.(int64))
 	if err != nil {
 		c.JSON(http.StatusOK, RelationUserListResponse{
 			Response: Response{StatusCode: 1, StatusMsg: fmt.Sprintf("err in relation service: %v", err)},

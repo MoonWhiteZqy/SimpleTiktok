@@ -38,4 +38,7 @@ func init() {
 		Addr: config.RedisAddr,
 		DB:   3,
 	})
+
+	// 读取MySQL数据到Redis
+	rdbInit()
 }

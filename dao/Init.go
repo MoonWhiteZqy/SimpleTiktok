@@ -24,7 +24,7 @@ func init() {
 	DB.AutoMigrate(FollowModel{})
 
 	// 点赞记录
-	rdbLike = redis.NewClient(&redis.Options{
+	rdbUserLike = redis.NewClient(&redis.Options{
 		Addr: config.RedisAddr,
 		DB:   1,
 	})
@@ -37,6 +37,16 @@ func init() {
 	rdbFollowerMasterDB = redis.NewClient(&redis.Options{
 		Addr: config.RedisAddr,
 		DB:   3,
+	})
+	// 视频被点赞的记录
+	rdbVideoLiked = redis.NewClient(&redis.Options{
+		Addr: config.RedisAddr,
+		DB:   4,
+	})
+	// 视频被评论的记录
+	rdbVideoCommentDB = redis.NewClient(&redis.Options{
+		Addr: config.RedisAddr,
+		DB:   5,
 	})
 
 	// 读取MySQL数据到Redis

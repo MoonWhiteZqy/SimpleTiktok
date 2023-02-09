@@ -20,8 +20,6 @@ type FileModel struct {
 // 获取视频文件在数据库中的数据后,处理转换成[]Video
 //
 // userHost用来填充PlayUrl和CoverUrl
-//
-// TODO:完善Video点赞数量、 Video评论数量
 func videoModelToVideo(models []FileModel, jwtUserId int64, userHost string) ([]Video, error) {
 	res := make([]Video, 0)
 	errList := make([]error, 0)
@@ -36,15 +34,18 @@ func videoModelToVideo(models []FileModel, jwtUserId int64, userHost string) ([]
 		}
 
 		// 获取点赞信息
-		isFavorite, _ := rdbLike.SIsMember(ctx, i64ToStr(jwtUserId), i64ToStr(int64(model.ID))).Result()
+		isFavorite, _ := rdbUserLike.SIsMember(ctx, i64ToStr(jwtUserId), i64ToStr(int64(model.ID))).Result()
+		favoriteCount, _ := rdbVideoLiked.SCard(ctx, i64ToStr(int64(model.ID))).Result()
+		// 获取评论数量
+		commentCount, _ := rdbVideoCommentDB.SCard(ctx, i64ToStr(int64(model.ID))).Result()
 
 		res = append(res, Video{
 			VideoId:       int64(model.ID),
 			Author:        author,
 			PlayUrl:       fmt.Sprintf("%v/douyin/static/%v/%v", userHost, author.UserId, model.FileName),
 			CoverUrl:      fmt.Sprintf("%v/douyin/static/%v/%v", userHost, author.UserId, getCoverAddr("", model.FileName)),
-			FavoriteCount: 0,
-			CommentCount:  0,
+			FavoriteCount: favoriteCount,
+			CommentCount:  commentCount,
 			IsFavorite:    isFavorite,
 			Title:         model.Title,
 		})

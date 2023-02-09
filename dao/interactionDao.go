@@ -26,11 +26,21 @@ type CommentModel struct {
 // TODO:对MySQL操作交给MQ
 func LikeAction(userId int64, videoIdStr string, like bool) error {
 	var err error
-	// 更新Redis内的Like
+	// 更新用户点赞的Redis
 	if like {
-		_, err = rdbLike.SAdd(ctx, fmt.Sprintf("%v", userId), videoIdStr).Result()
+		_, err = rdbUserLike.SAdd(ctx, i64ToStr(userId), videoIdStr).Result()
 	} else {
-		_, err = rdbLike.SRem(ctx, fmt.Sprintf("%v", userId), videoIdStr).Result()
+		_, err = rdbUserLike.SRem(ctx, i64ToStr(userId), videoIdStr).Result()
+	}
+	if err != nil {
+		return err
+	}
+
+	// 更新视频被用户点赞的Redis
+	if like {
+		_, err = rdbVideoLiked.SAdd(ctx, videoIdStr, i64ToStr(userId)).Result()
+	} else {
+		_, err = rdbVideoLiked.SRem(ctx, videoIdStr, i64ToStr(userId)).Result()
 	}
 	if err != nil {
 		return err
@@ -56,7 +66,7 @@ func LikeAction(userId int64, videoIdStr string, like bool) error {
 // 获取用户点赞过的所有视频
 func LikeList(userId int64, userHost string) ([]Video, error) {
 	// 从Redis读取点赞过的视频
-	videoIdStrs, err := rdbLike.SMembers(ctx, fmt.Sprintf("%v", userId)).Result()
+	videoIdStrs, err := rdbUserLike.SMembers(ctx, fmt.Sprintf("%v", userId)).Result()
 	if err != nil {
 		return make([]Video, 0), err
 	}
@@ -91,10 +101,15 @@ func PublishComment(userId int64, videoId int64, commentText string) (Comment, e
 		return Comment{}, err
 	}
 
+	_, err = rdbVideoCommentDB.SAdd(ctx, i64ToStr(videoId), i64ToStr(int64(comment.ID))).Result()
+	if err != nil {
+		return Comment{}, fmt.Errorf("err in redis: %v", err)
+	}
+
 	// 获取发布评论者的信息
 	user, err := getUserById(userId, userId)
 	if err != nil {
-		return Comment{}, errors.New("err when getting user")
+		return Comment{}, fmt.Errorf("err in getting user: %v", err)
 	}
 
 	// 获取评论的日期
@@ -110,7 +125,14 @@ func PublishComment(userId int64, videoId int64, commentText string) (Comment, e
 
 // 用户删除发表的评论
 func DeleteComment(userId int64, commentId int64) error {
-	return DB.Model(CommentModel{}).Where("user_id = ?", userId).Delete(&CommentModel{}, commentId).Error
+	var comment CommentModel
+	err := DB.Where("id = ?", commentId).Where("user_id = ?", userId).Find(&comment).Error
+	// 查询时出错或找不到该评论
+	if err != nil || comment.Model == nil {
+		return fmt.Errorf("err when query comment: %v", err)
+	}
+	rdbVideoCommentDB.SRem(ctx, i64ToStr(comment.VideoId), commentId).Result()
+	return DB.Delete(&comment).Error
 }
 
 // 获取视频的所有评论,按发布时间倒序
@@ -153,4 +175,11 @@ func getFollowLogs() []FollowModel {
 	var follows []FollowModel
 	DB.Find(&follows)
 	return follows
+}
+
+// 获取所有 评论 关系,交给Redis
+func getCommentLogs() []CommentModel {
+	var comments []CommentModel
+	DB.Find(&comments)
+	return comments
 }

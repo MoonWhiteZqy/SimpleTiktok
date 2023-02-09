@@ -20,15 +20,14 @@ func i64ToStr(id int64) string {
 // 关注用户
 func FollowMaster(userId, masterId int64) error {
 	// 添加到redis表中
-	n1, err := rdbMasterFollowerDB.SAdd(ctx, i64ToStr(masterId), i64ToStr(userId)).Result()
+	_, err := rdbMasterFollowerDB.SAdd(ctx, i64ToStr(masterId), i64ToStr(userId)).Result()
 	if err != nil {
 		return fmt.Errorf("err in redis master table: %v", err)
 	}
-	n2, err := rdbFollowerMasterDB.SAdd(ctx, i64ToStr(userId), i64ToStr(masterId)).Result()
+	_, err = rdbFollowerMasterDB.SAdd(ctx, i64ToStr(userId), i64ToStr(masterId)).Result()
 	if err != nil {
 		return fmt.Errorf("err in redis follower table: %v", err)
 	}
-	fmt.Println("affected:", n1, n2)
 
 	// 添加到MySQL中
 	err = DB.FirstOrCreate(&FollowModel{MasterId: masterId, FollowerId: userId}).Error
@@ -38,15 +37,14 @@ func FollowMaster(userId, masterId int64) error {
 // 取关用户
 func UnFollowMaster(userId, masterId int64) error {
 	// 从Redis表中删除记录
-	n1, err := rdbMasterFollowerDB.SRem(ctx, i64ToStr(masterId), i64ToStr(userId)).Result()
+	_, err := rdbMasterFollowerDB.SRem(ctx, i64ToStr(masterId), i64ToStr(userId)).Result()
 	if err != nil {
 		return fmt.Errorf("err in redis master table: %v", err)
 	}
-	n2, err := rdbFollowerMasterDB.SRem(ctx, i64ToStr(userId), i64ToStr(masterId)).Result()
+	_, err = rdbFollowerMasterDB.SRem(ctx, i64ToStr(userId), i64ToStr(masterId)).Result()
 	if err != nil {
 		return fmt.Errorf("err in redis follower table: %v", err)
 	}
-	fmt.Println("affected:", n1, n2)
 
 	// 从MySQL中删除
 	err = DB.Where("master_id = ?", masterId).Where("follower_id = ?", userId).Delete(&FollowModel{}).Error

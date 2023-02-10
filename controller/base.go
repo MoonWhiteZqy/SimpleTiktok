@@ -4,6 +4,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"simpleTiktok/middleware/jwt"
 	"simpleTiktok/service"
 	"strconv"
@@ -21,7 +22,7 @@ func Feed(c *gin.Context) {
 	latestTime, err := strconv.ParseInt(latestTimeStr, 10, 64)
 
 	// 如果latestTime转换失败,以当前时间作为最后时间
-	if err != nil || latestTime < 0 {
+	if err != nil || latestTime < 0 || latestTime > time.Now().Unix() {
 		latestTime = time.Now().Unix()
 	}
 
@@ -206,4 +207,28 @@ func PublishListVideos(c *gin.Context) {
 		Response:  Response{StatusCode: 0},
 		VideoList: videos,
 	})
+}
+
+// GET /douyin/:authodId/:fileName
+//
+// 返回视频和封面
+func GetFileContent(c *gin.Context) {
+	authorId := c.Param("authorId")
+	fileName := c.Param("fileName")
+
+	// 读取视频或封面内容
+	content, err := os.ReadFile(fmt.Sprintf("./storage/%v/%v", authorId, fileName))
+	if fileName[len(fileName)-3:] == "mp4" {
+		if err != nil {
+			c.Data(http.StatusOK, "video/mp4", videoNotFound)
+		} else {
+			c.Data(http.StatusOK, "video/mp4", content)
+		}
+	} else {
+		if err != nil {
+			c.Data(http.StatusOK, "image/jpeg", imageNotFound)
+		} else {
+			c.Data(http.StatusOK, "image/jpeg", content)
+		}
+	}
 }

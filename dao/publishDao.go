@@ -42,8 +42,8 @@ func videoModelToVideo(models []FileModel, jwtUserId int64, userHost string) ([]
 		res = append(res, Video{
 			VideoId:       int64(model.ID),
 			Author:        author,
-			PlayUrl:       fmt.Sprintf("%v/douyin/static/%v/%v", userHost, author.UserId, model.FileName),
-			CoverUrl:      fmt.Sprintf("%v/douyin/static/%v/%v", userHost, author.UserId, getCoverAddr("", model.FileName)),
+			PlayUrl:       fmt.Sprintf("http://%v/douyin/static/%v/%v", userHost, author.UserId, model.FileName),
+			CoverUrl:      fmt.Sprintf("http://%v/douyin/static/%v/%v", userHost, author.UserId, getCoverAddr("", model.FileName)),
 			FavoriteCount: favoriteCount,
 			CommentCount:  commentCount,
 			IsFavorite:    isFavorite,
@@ -95,7 +95,6 @@ func SavePOSTFile(content []byte, path, fileName, title string, userId int64) er
 		return err
 	}
 	coverPath := getCoverAddr(path, fileName)
-	fmt.Println("coverPath:", coverPath)
 	if len(coverPath) > 0 {
 		// var out []byte
 		// Command中,空格需要用参数分割,而不能直接在string中写空格
@@ -122,8 +121,9 @@ func GetVideoOfUser(userId, jwtUserId int64, userHost string) ([]Video, error) {
 func GetFeed(latestTime, jwtUserId int64, userHost string) (res []Video, nextTime int64, err error) {
 	var videos []FileModel
 
+	lt := time.Unix(latestTime, 0)
 	// 获取视频文件信息
-	err = DB.Where("created_at < ?", time.Unix(latestTime, 0)).Order("created_at desc").Limit(config.FeedLimit).Find(&videos).Error
+	err = DB.Where("created_at < ?", lt).Order("created_at desc").Limit(config.FeedLimit).Find(&videos).Error
 	if err != nil {
 		return
 	}

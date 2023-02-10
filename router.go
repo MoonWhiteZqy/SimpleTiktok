@@ -18,21 +18,21 @@ func initRouter(r *gin.Engine) {
 
 	p := g.Group("/publish")
 
-	p.POST("/action", jwt.AuthFormUser, controller.PublishAction)
-	p.GET("/list", jwt.AuthUser, controller.PublishListVideos)
+	p.POST("/action/", jwt.AuthFormUser, controller.PublishAction)
+	p.GET("/list/", jwt.AuthUser, controller.PublishListVideos)
 
 	// 互动 API
-	g.POST("/favorite/action", jwt.AuthUser, controller.FavoriteAction)
-	g.GET("/favorite/list", jwt.AuthUser, controller.FavoriteList)
-	g.POST("/comment/action", jwt.AuthUser, controller.CommentAction)
-	g.GET("/comment/list", jwt.AuthUser, controller.CommentList)
+	g.POST("/favorite/action/", jwt.AuthUser, controller.FavoriteAction)
+	g.GET("/favorite/list/", jwt.AuthUser, controller.FavoriteList)
+	g.POST("/comment/action/", jwt.AuthUser, controller.CommentAction)
+	g.GET("/comment/list/", jwt.AuthUser, controller.CommentList)
 
 	// 社交 API
 	re := g.Group("/relation")
-	re.POST("/action", jwt.AuthUser, controller.RelationAction)
-	re.GET("/follow/list", jwt.AuthUser, controller.RelationFollowList)
-	re.GET("/follower/list", jwt.AuthUser, controller.RelationFollowerList)
+	re.POST("/action/", jwt.AuthUser, controller.RelationAction)
+	re.GET("/follow/list/", jwt.AuthUser, controller.RelationFollowList)
+	re.GET("/follower/list/", jwt.AuthUser, controller.RelationFollowerList)
 
 	// 静态文件
-	g.Static("/static/", "./storage/")
+	g.GET("/static/:authorId/:fileName", jwt.AuthTourist, controller.GetFileContent)
 }
